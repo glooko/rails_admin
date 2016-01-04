@@ -16,13 +16,23 @@ module RailsAdmin
 
         register_instance_option :pretty_value do
           v = bindings[:view]
-          [value].flatten.select(&:present?).collect do |associated|
-            amc = polymorphic? ? RailsAdmin.config(associated) : associated_model_config # perf optimization for non-polymorphic associations
-            am = amc.abstract_model
-            wording = associated.send(amc.object_label_method)
-            can_see = !am.embedded? && (show_action = v.action(:show, am, associated))
-            can_see ? v.link_to(wording, v.url_for(action: show_action.action_name, model_name: am.to_param, id: associated.id), class: 'pjax') : ERB::Util.html_escape(wording)
-          end.to_sentence.html_safe
+          size = bindings[:object].send(association.name).try(:size) || 1
+          if size < 5
+            associations = [value].flatten.select(&:present?).collect do |associated|
+              amc = polymorphic? ? RailsAdmin.config(associated) : associated_model_config # perf optimization for non-polymorphic associations
+              am = amc.abstract_model
+              wording = associated.send(amc.object_label_method)
+              can_see = !am.embedded? && (show_action = v.action(:show, am, associated))
+              can_see ? v.link_to(wording, v.url_for(action: show_action.action_name, model_name: am.to_param, id: associated.id), class: 'pjax') : ERB::Util.html_escape(wording)
+            end
+          else
+            entry = bindings[:object].send(association.name).first
+            amc = polymorphic? ? RailsAdmin.config(entry) : associated_model_config # perf optimization for non-polymorphic associations
+            am_name = amc.abstract_model.to_param
+            obj_name = bindings[:object].class.name.downcase
+            associations = [v.link_to("#{size} entries", v.url_for(model_name: am_name, id: '', "f[#{obj_name}][00732][v]" => bindings[:object].id.to_s))]
+          end
+          associations.to_sentence.html_safe
         end
 
         # Accessor whether association is visible or not. By default
