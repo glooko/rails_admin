@@ -1,2 +1,14 @@
 = rails_admin_form_for @object, url: edit_path(@abstract_model, @object.id), as: @abstract_model.param_key, html: { method: "put", multipart: true, class: "form-horizontal denser", data: { title: @page_name } } do |form|
   = form.generate action: :update
+
+:javascript
+  $(function() {
+    if (location.pathname.startsWith('/admin/terminal/')) {
+      var adminId = $('.edit_user_root_link').children().attr('href').split('/')[3];
+      $('#terminal_updater').val(adminId);
+      console.log($('#terminal_updater').val());
+      $('#terminal_updater_field').hide();
+      $('#terminal_rails_admin').prop("checked", true);
+      $('#terminal_rails_admin_field').hide();
+    }
+  })
